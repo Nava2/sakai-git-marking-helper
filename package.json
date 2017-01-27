@@ -1,14 +1,16 @@
 {
-  "name": "sakai-helper",
+  "name": "sakai-gh-helper",
   "version": "1.0.0",
-  "description": "Marking helper for OWL projects downloaded from Sakai.",
+  "description": "Marking helper for Github projects downloaded from Sakai.",
   "main": "app.js",
   "scripts": {
-    "test": "node ./app.js \"26-Jan-2017 23:55\" ./test-data"
+    "test": "node ./app.js \"26-Jan-2017 23:55\" ./test-data",
+    "download": "node ./app.js --download",
+    "submit": "node ./app.js --submit"
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/Nava2/sakai-github-education-clone-all.git"
+    "url": "git+ssh://git@github.com:Nava2/sakai-github-education-marking-helper.git"
   },
   "keywords": [
     "sakai",
@@ -38,9 +40,16 @@
     "@types/bluebird": "^3.0.37",
     "@types/fs-promise": "^1.0.1",
     "@types/glob": "^5.0.30",
+    "@types/handlebars": "^4.0.31",
     "@types/lodash": "^4.14.50",
+    "@types/minimist": "^1.2.0",
     "@types/moment-timezone": "^0.2.34",
     "@types/mz": "^0.0.30",
-    "@types/node": "^7.0.0"
+    "@types/node": "^7.0.4",
+    "gulp": "^3.9.1",
+    "gulp-load-plugins": "^1.4.0",
+    "gulp-typescript": "^3.1.4",
+    "pump": "^1.0.2",
+    "typescript": "^2.1.5"
   }
 }

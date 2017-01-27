@@ -2,12 +2,6 @@
 
 const path = require('path');
 
-const minimist = require('minimist')(process.argv.slice(2), {
-  string: ['due']
-});
-
-require('any-promise/register/bluebird');
-
 const _ = require('lodash');
 const fs = require('fs-promise');
 const git = require('simple-git');
@@ -16,13 +10,17 @@ const moment = require('moment');
 const Promise = require('bluebird');
 const hbs = require('handlebars');
 
-if (!minimist._ || !minimist._[0]) {
-  throw new Error('Must specify directory for students as positional argument.');
-}
+const config = require('./config.js');
 
-const DUE_DATE = moment(minimist.due || minimist._[0], [moment.ISO_8601, "DD-MMM-YYYY hh:mm"]);
-const ASSIGNMENT_DIR = _.last(minimist._);
-const PENALTY = 0.20;
+const minimist = require('minimist')(process.argv.slice(2), {
+  boolean: ['download', 'submit']
+});
+
+require('any-promise/register/bluebird');
+
+
+
+config.dueDate = moment(config.dueDate, [moment.ISO_8601, "DD-MMM-YYYY hh:mm"]);
 
 fs.readFile(path.join(__dirname, 'rubric.md.hbs'))
   .then(v => v.toString())

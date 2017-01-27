@@ -76,3 +76,4 @@ fabric.properties
 /typings/
 /.env
 /rubric.md.hbs
+/dest/

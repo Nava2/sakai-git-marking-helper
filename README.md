@@ -11,9 +11,14 @@ because it is useful to modify for your own purposes.
 
 ## Running
 
-To run, use: `node ./app.js $DATE /path/to/unzipped/assignment`
+1. Download your assignment from Sakai: 
+    ![Download All from Sakai](./download-all.gif)
+2. Unzip the assignment and get the folder, e.g. "C:\Users\John\Downloads\bulk_download\Lab 00"
+3. Copy the due date of the assignment, e.g. "27-Jan-2017 23:55"
+4. Open `./config.js` and modify the parameters within
+4. In this project's directory, run: 
+  `npm download`
 
-Example: `node ./app.js "26-Jan-2017 23:55" ~/Downloads/bulk_download/Lab\ 00`
 Within each student directory, there will be a `meta.json` which looks like: 
 
 ```json
