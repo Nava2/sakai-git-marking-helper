@@ -23,7 +23,6 @@ const DUE_DATE = moment(minimist.due || minimist._[0], [moment.ISO_8601, "DD-MMM
 const ASSIGNMENT_DIR = _.last(minimist._);
 const PENALTY = 0.20;
 
-const ID_REGEX = /.*\(([\w\d]+)\)/;
 
 fs.readdir(ASSIGNMENT_DIR)
   .filter(studentDir => {
@@ -41,20 +40,47 @@ fs.readdir(ASSIGNMENT_DIR)
 
         return fs.readFile(path.join(ASSIGNMENT_DIR, studentDir, globbed[0]));
       })
-      .then(location => {
-        // The location from the file should be a URI
-        const uri = location.toString().trim();
+      .then(contentArray => {
+        const content = contentArray.toString();
+
+        const ID_REGEX = /.*\(([\w\d]+)\)/;
 
         const parsed = {
           studentId: ID_REGEX.exec(studentDir)[1],
           studentDirectory: path.join(ASSIGNMENT_DIR, studentDir)
         };
 
-        if (!!uri && uri !== '') {
-          _.extend(parsed, {
-            cloneDirectory: path.join(ASSIGNMENT_DIR, studentDir, 'submission'),
-            gitUri: uri
-          });
+        if (content !== '') {
+          const CORRECT_GIT_URL_REGEX = /git@github\.com:uwoece-se2205b-2017\/[\w-]+\.git/g;
+          const correctMatch = CORRECT_GIT_URL_REGEX.exec(content);
+          if (!!correctMatch) {
+            // got a valid git url:
+            // The location from the file should be a URI
+            const uri = correctMatch[0];
+
+            _.extend(parsed, {
+              cloneDirectory: path.join(ASSIGNMENT_DIR, studentDir, 'submission'),
+              gitUri: uri
+            });
+
+          } else {
+            const HTTPS_GIT_URL_REGEX = /https:\/\/github\.com\/uwoece-se2205b-2017\/[\w-]+\.git/g;
+
+            const httpsMatch = HTTPS_GIT_URL_REGEX.exec(content);
+            if (!!httpsMatch) {
+              _.extend(parsed, {
+                error: "Received https link, incorrect submission: " + httpsMatch[0]
+              });
+            } else {
+              const INVALID_GIT_URL_REGEX = /git@github.com:uwoece-se2205b-2017\/[\w-]+\.git/g;
+              const invalidUrlMatch = INVALID_GIT_URL_REGEX.exec(content);
+              if (!!invalidUrlMatch) {
+                _.extend(parsed, {
+                  error: "Invalid git url found: " + invalidUrlMatch[0]
+                });
+              }
+            }
+          }
         }
 
         return Promise.resolve(parsed);
@@ -65,17 +91,25 @@ fs.readdir(ASSIGNMENT_DIR)
       return Promise.resolve(parsed);
     }
 
-    parsed.git = git();
-    return Promise.promisify(parsed.git.clone, { context: parsed.git })(parsed.gitUri, parsed.cloneDirectory).then(() => {
-      return parsed;
-    }).catch(err => {
-      if (err.message.indexOf('already exists and is not an empty directory') >= 0) {
-        console.warn(`${parsed.studentId}: Tried to clone repository, already exists: "${parsed.cloneDirectory}"`);
-        return Promise.resolve(parsed);
-      }
+    return fs.exists(parsed.cloneDirectory)
+      .then(exists => {
+        if (!exists) {
+          parsed.git = git();
+          return Promise.promisify(parsed.git.clone, {context: parsed.git})(parsed.gitUri, parsed.cloneDirectory);
+        } else {
+          parsed.git = git(parsed.cloneDirectory);
+          return Promise.promisify(parsed.git.pull, { context: parsed.git })('origin', 'master');
+        }
+      })
+      .then(() => parsed)
+      .catch(err => {
+        if (err.message.indexOf('already exists and is not an empty directory') >= 0) {
+          console.warn(`${parsed.studentId}: Tried to clone repository, already exists: "${parsed.cloneDirectory}"`);
+          return Promise.resolve(parsed);
+        }
 
-      throw err;
-    });
+        throw err;
+      });
   })
   .map(parsed => {
     // read the date back:
@@ -102,7 +136,14 @@ fs.readdir(ASSIGNMENT_DIR)
 
               for (let log of logs.all) {
                 const mdate = moment(log.date, 'YYYY-MM-DD hh:mm:ss ZZ');
-                if (mdate.isSameOrBefore(parsed.owlDate)) {
+                if (mdate.isSameOrBefore(DUE_DATE)) {
+                  if (mdate.isAfter(parsed.owlDate)) {
+                    // submitted code after the due date
+                    _.extend(parsed, {
+                      warning: "Code submitted after OWL submission, but before Due Date"
+                    })
+                  }
+
                   const lateDiff = moment.duration(mdate.diff(DUE_DATE));
                   _.extend(parsed, {
                     submission: {
@@ -134,6 +175,9 @@ fs.readdir(ASSIGNMENT_DIR)
         }
       });
   })
+  .catch(parsed => {
+    return parsed;
+  })
   .map(parsed => {
 
     const outDir = parsed.studentDirectory;
@@ -145,7 +189,6 @@ fs.readdir(ASSIGNMENT_DIR)
     if (parsed.submission) {
       const days = parsed.submission.late.days();
       parsed.submission.late = (days <= 0 ? "on-time" : days + " days");
-
     }
 
     return fs.writeFile(path.join(outDir, "meta.json"), JSON.stringify(parsed, null, '  '));
