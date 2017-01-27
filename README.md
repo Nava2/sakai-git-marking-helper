@@ -6,14 +6,14 @@ because it is useful to modify for your own purposes.
 ## Install
 
 1. Install nodejs: https://nodejs.org/en/
-2. _(Optional)_ Install `yarn`: `npm install -g yarn`, otherwise use `npm`
+2. _(Optional)_ Install `yarn`: `npm install -g yarn`, otherwise use `npm` for install
 3. Run `yarn install`
 
 ## Running
 
-To run, use: `node ./app.js --due $DATE /path/to/unzipped/assignment`
+To run, use: `node ./app.js $DATE /path/to/unzipped/assignment`
 
-Example: `node ./app.js --due "26-Jan-2017 23:55" ~/Downloads/bulk_download/Lab\ 00`
+Example: `node ./app.js "26-Jan-2017 23:55" ~/Downloads/bulk_download/Lab\ 00`
 Within each student directory, there will be a `meta.json` which looks like: 
 
 ```json
