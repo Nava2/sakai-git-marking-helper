@@ -144,7 +144,7 @@ fs.readdir(ASSIGNMENT_DIR)
                     })
                   }
 
-                  const lateDiff = moment.duration(mdate.diff(DUE_DATE));
+                  const lateDiff = moment.duration(moment.max(mdate, parsed.owlDate).diff(DUE_DATE));
                   _.extend(parsed, {
                     submission: {
                       hash: log.hash,
