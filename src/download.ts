@@ -35,7 +35,7 @@ function parseSubmissionInfo(studentDir: string): Promise<Parsed> {
         const content = parsed.rawSubmission;
 
         if (content !== '') {
-          const CORRECT_GIT_URL_REGEX = /git@github\.com:uwoece-se2205b-2017\/[\w-]+\.git/g;
+          const CORRECT_GIT_URL_REGEX = /\bgit@github\.com:uwoece-se2205b-2017\/[\w-]+\.git\b/g;
           const correctMatch = CORRECT_GIT_URL_REGEX.exec(content);
           if (!!correctMatch) {
             // got a valid git url:
@@ -46,7 +46,7 @@ function parseSubmissionInfo(studentDir: string): Promise<Parsed> {
             parsed.gitUri = uri;
           } else {
             // Now look for common errors
-            const HTTPS_GIT_URL_REGEX = /https:\/\/github\.com\/uwoece-se2205b-2017\/([\w-]+)\.git/g;
+            const HTTPS_GIT_URL_REGEX = /\bhttps:\/\/github\.com\/uwoece-se2205b-2017\/([\w-]+)(?:\.git)?\b/g;
 
             const httpsMatch = HTTPS_GIT_URL_REGEX.exec(content);
             if (!!httpsMatch) {
