@@ -11,13 +11,17 @@ because it is useful to modify for your own purposes.
 
 ## Running
 
+Before using any built-in commands, do the following: 
+
 1. Download your assignment from Sakai: 
     ![Download All from Sakai](./download-all.gif)
 2. Unzip the assignment and get the folder, e.g. "C:\Users\John\Downloads\bulk_download\Lab 00"
 3. Copy the due date of the assignment, e.g. "27-Jan-2017 23:55"
-4. Open `./config.js` and modify the parameters within
-4. In this project's directory, run: 
-  `yarn run download`
+4. Open [`./config.js`](./config.js) and modify the parameters within
+
+### Downloading Sources
+
+In this project's directory, run: `yarn run download`
 
 Within each student directory, there will be a `meta.json` which looks like: 
 
@@ -34,3 +38,6 @@ Within each student directory, there will be a `meta.json` which looks like:
   }
 }
 ```
+
+Additionally, a rubric file will be created for marking purposes. Feel free to also 
+modify the assignment itself as students will see changes you make in their repository. 
