@@ -46,17 +46,17 @@ function parseSubmissionInfo(studentDir: string): Promise<Parsed> {
             parsed.gitUri = uri;
           } else {
             // Now look for common errors
-            const HTTPS_GIT_URL_REGEX = /https:\/\/github\.com\/uwoece-se2205b-2017\/[\w-]+\.git/g;
+            const HTTPS_GIT_URL_REGEX = /https:\/\/github\.com\/uwoece-se2205b-2017\/([\w-]+)\.git/g;
 
             const httpsMatch = HTTPS_GIT_URL_REGEX.exec(content);
             if (!!httpsMatch) {
-              throw new Error("Received https link, incorrect submission: " + httpsMatch[0]);
+
+              parsed.cloneDirectory = path.join(config.extractedDirectory, studentDir, `submission-${parsed.studentId}`);
+              parsed.gitUri = "git@github.com:uwoece-se2205b-2017/" + httpsMatch[1] + ".git";
+
+              parsed.warnings.push("Converted https link to git-link, incorrect submission: " + httpsMatch[0]);
             } else {
-              const INVALID_GIT_URL_REGEX = /git@github.com:uwoece-se2205b-2017\/[\w-]+\.git/g;
-              const invalidUrlMatch = INVALID_GIT_URL_REGEX.exec(content);
-              if (!!invalidUrlMatch) {
-                throw new Error("Invalid git url found: " + invalidUrlMatch[0]);
-              }
+              throw new Error("No usable submission found");
             }
           }
         }
@@ -120,7 +120,7 @@ function readSakaiTimestamp(parsed: Parsed): Promise<moment.Moment> {
     });
 }
 
-function getLastCommit(git: git.Git, cloneDirectory: string, sakaiDate: moment.Moment): Promise<SubmissionInfo> {
+function getLastCommit(git: git.Git, sakaiDate: moment.Moment): Promise<SubmissionInfo> {
   // parse the git information
   if (!git) {
     return null;
@@ -129,18 +129,12 @@ function getLastCommit(git: git.Git, cloneDirectory: string, sakaiDate: moment.M
   return Promise.promisify(git.log, { context: git })()
     .then((logs: git.ListLogSummary) => {
       // logs are in reverse chronological order already! :D
-      let warnings = [];
 
       const maxSubDate = config.dueDate.add(config.late.days);
 
       for (let log of logs.all) {
         const mdate = moment(log["date"], 'YYYY-MM-DD hh:mm:ss ZZ');
         if (mdate.isSameOrBefore(maxSubDate)) {
-          if (mdate.isAfter(sakaiDate)) {
-            // submitted code after the due date
-            warnings.push("Code submitted after Sakai submission, but before Due Date");
-          }
-
           const lateDiff = moment.duration(moment.max(mdate, sakaiDate).diff(config.dueDate));
           let submission: SubmissionInfo = {
             commit: {
@@ -172,7 +166,7 @@ function initializeSubmissions(): Promise<Parsed[]> {
         .then((sakaiDate: moment.Moment) => {
           // With the timestamp, now we read the commit information
           if (!parsed.error) {
-            return getLastCommit(parsed.git, parsed.cloneDirectory, sakaiDate)
+            return getLastCommit(parsed.git, sakaiDate)
               .then(subInfo => {
                 parsed.submission = subInfo;
                 return Promise.resolve(parsed);
@@ -246,8 +240,15 @@ function download() {
         .map((parsed: Parsed) => (writeParsedInformation(rubric, parsed)));
     })
     .each((parsed: Parsed) => {
+
+      if (parsed.warnings.length > 0) {
+        parsed.warnings.forEach(w => {
+          console.warn(parsed.studentId + ": " + w);
+        });
+      }
+
       if (parsed.error) {
-        console.warn(`${parsed.studentId}: ${parsed.error.message}`);
+        console.error(`${parsed.studentId}: ${parsed.error.message}`);
       } else {
         console.log(`${parsed.studentId}: Completed download`);
       }

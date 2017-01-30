@@ -19,7 +19,7 @@ export interface SubmissionInfo {
   penalty: number;
 }
 
-export interface Parsed {
+export class Parsed {
   studentId: string;
   studentDirectory: string;
 
@@ -27,6 +27,7 @@ export interface Parsed {
   gitUri?: string;
 
   error?: Error;
+  warnings: string[] = [];
 
   rawSubmission?: string;
   submission?: SubmissionInfo;

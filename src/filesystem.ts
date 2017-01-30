@@ -15,7 +15,8 @@ export function getSubmissionForDirectory(studentDir: string): Promise<Parsed> {
 
   const parsed: Parsed = {
     studentId: ID_REGEX.exec(studentDir)[1],
-    studentDirectory: path.join(config.extractedDirectory, studentDir)
+    studentDirectory: path.join(config.extractedDirectory, studentDir),
+    warnings: []
   };
 
   return Promise.resolve(glob('*_submissionText.html', {cwd: path.join(config.extractedDirectory, studentDir)}))
