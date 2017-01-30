@@ -4,11 +4,10 @@
   "description": "Marking helper for Github projects downloaded from Sakai.",
   "main": "app.js",
   "scripts": {
-    "test": "node ./app.js \"26-Jan-2017 23:55\" ./test-data",
-    "dbg-download": "gulp && node %NODE_DEBUG_OPTION% ./dist/app.js --download",
-    "download": "gulp && node ./dist/app.js --download",
-    "dbg-submit": "gulp && node %NODE_DEBUG_OPTION% ./dist/app.js --submit",
-    "submit": "gulp && node ./dist/app.js --submit"
+    "dbg-download": "node ./node_modules/gulp-cli/bin/gulp && node %NODE_DEBUG_OPTION% ./dist/app.js --download",
+    "download": "node ./node_modules/gulp-cli/bin/gulp && node ./dist/app.js --download",
+    "dbg-submit": "node ./node_modules/gulp-cli/bin/gulp && node %NODE_DEBUG_OPTION% ./dist/app.js --submit",
+    "submit": "node ./node_modules/gulp-cli/bin/gulp && node ./dist/app.js --submit"
   },
   "repository": {
     "type": "git",
