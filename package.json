@@ -5,8 +5,10 @@
   "main": "app.js",
   "scripts": {
     "test": "node ./app.js \"26-Jan-2017 23:55\" ./test-data",
-    "download": "node ./app.js --download",
-    "submit": "node ./app.js --submit"
+    "dbg-download": "gulp && node %NODE_DEBUG_OPTION% ./dist/app.js --download",
+    "download": "gulp && node ./dist/app.js --download",
+    "dbg-submit": "gulp && node %NODE_DEBUG_OPTION% ./dist/app.js --submit",
+    "submit": "gulp && node ./dist/app.js --submit"
   },
   "repository": {
     "type": "git",
@@ -26,7 +28,6 @@
   "dependencies": {
     "any-promise": "^1.3.0",
     "bluebird": "^3.4.7",
-    "fs-promise": "^1.0.0",
     "glob": "^7.1.1",
     "glob-promise": "^3.1.0",
     "handlebars": "^4.0.6",
@@ -34,11 +35,11 @@
     "minimist": "^1.2.0",
     "moment": "^2.17.1",
     "moment-timezone": "^0.5.11",
+    "mz": "^2.6.0",
     "simple-git": "^1.65.0"
   },
   "devDependencies": {
     "@types/bluebird": "^3.0.37",
-    "@types/fs-promise": "^1.0.1",
     "@types/glob": "^5.0.30",
     "@types/handlebars": "^4.0.31",
     "@types/lodash": "^4.14.50",
@@ -46,8 +47,9 @@
     "@types/moment-timezone": "^0.2.34",
     "@types/mz": "^0.0.30",
     "@types/node": "^7.0.4",
-    "gulp": "^3.9.1",
+    "gulp": "gulpjs/gulp#4.0",
     "gulp-load-plugins": "^1.4.0",
+    "gulp-sourcemaps": "^2.4.0",
     "gulp-typescript": "^3.1.4",
     "pump": "^1.0.2",
     "typescript": "^2.1.5"

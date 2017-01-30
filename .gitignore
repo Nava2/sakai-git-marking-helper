@@ -1,3 +1,6 @@
+# Intentional ignore, this will be changed by others
+/config.js
+
 dist/
 
 .DS_Store

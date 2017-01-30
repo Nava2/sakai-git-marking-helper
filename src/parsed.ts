@@ -1,27 +1,34 @@
 
 import * as moment from "moment";
-import { Git } from "../types/simple-git";
+import { Git } from "simple-git";
 
-interface SubmissionInfo {
+export interface SubmissionInfo {
+
+  /**
+   * Commit information
+   */
+  commit: {
+    date: moment.Moment,
     hash: string;
+  };
 
-    date: moment.Moment;
+  sakaiDate: moment.Moment;
 
-    late: moment.Duration;
+  late: moment.Duration;
 
-    penalty: number;
+  penalty: number;
 }
 
 export interface Parsed {
-    studentId: string;
-    studentDirectory: string;
+  studentId: string;
+  studentDirectory: string;
 
-    cloneDirectory?: string;
-    gitUri?: string;
+  cloneDirectory?: string;
+  gitUri?: string;
 
-    error?: Error | string;
+  error?: Error;
 
-    submission?: SubmissionInfo;
+  submission?: SubmissionInfo;
 
-    git?: Git;
+  git?: Git;
 }
