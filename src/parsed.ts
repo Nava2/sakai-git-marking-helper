@@ -28,6 +28,7 @@ export interface Parsed {
 
   error?: Error;
 
+  rawSubmission?: string;
   submission?: SubmissionInfo;
 
   git?: Git;

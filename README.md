@@ -6,7 +6,7 @@ because it is useful to modify for your own purposes.
 ## Install
 
 1. Install nodejs: https://nodejs.org/en/
-2. _(Optional)_ Install `yarn`: `npm install -g yarn`, otherwise use `npm` for install
+2. Install `yarn`: `npm install -g yarn`
 3. Run `yarn install`
 
 ## Running
@@ -17,7 +17,7 @@ because it is useful to modify for your own purposes.
 3. Copy the due date of the assignment, e.g. "27-Jan-2017 23:55"
 4. Open `./config.js` and modify the parameters within
 4. In this project's directory, run: 
-  `npm download`
+  `yarn run download`
 
 Within each student directory, there will be a `meta.json` which looks like: 
 

@@ -12,13 +12,13 @@ import * as fs from 'mz/fs';
 import _ = require('lodash');
 import git = require("simple-git");
 import moment = require('moment');
-import glob = require('glob-promise');
 import Handlebars = require('handlebars');
 
 import {Parsed, SubmissionInfo} from './parsed';
 
-import cfg = require("./config");
-const config = cfg.load();
+import {getSubmissionForDirectory, getStudentDirectories} from "./filesystem";
+
+const config = require("./config").load();
 
 function getRubricTemplate() {
   return Promise.resolve(fs.readFile(config.rubric.templatePath))
@@ -26,58 +26,49 @@ function getRubricTemplate() {
     .then(Handlebars.compile);
 }
 
-function readSubmissionInfo(studentDir: string): Promise<Parsed> {
-  const ID_REGEX = /.*\(([\w\d]+)\)/;
+function parseSubmissionInfo(studentDir: string): Promise<Parsed> {
+  return getSubmissionForDirectory(studentDir)
+    .then(parsed => {
 
-  const parsed: Parsed = {
-    studentId: ID_REGEX.exec(studentDir)[1],
-    studentDirectory: path.join(config.extractedDirectory, studentDir)
-  };
+      return Promise.try(() => {
+        // read from the Raw submission
+        const content = parsed.rawSubmission;
 
-  return Promise.resolve(glob('*_submissionText.html', { cwd: path.join(config.extractedDirectory, studentDir) }))
-    .then(globbed => {
-      if (globbed.length !== 1) {
-        return Promise.reject(new Error("Got more than 1 submission: " + globbed));
-      }
+        if (content !== '') {
+          const CORRECT_GIT_URL_REGEX = /git@github\.com:uwoece-se2205b-2017\/[\w-]+\.git/g;
+          const correctMatch = CORRECT_GIT_URL_REGEX.exec(content);
+          if (!!correctMatch) {
+            // got a valid git url:
+            // The location from the file should be a URI
+            const uri = correctMatch[0];
 
-      return Promise.resolve(fs.readFile(path.join(config.extractedDirectory, studentDir, globbed[0])));
-    })
-    .then(contentArray => {
-      const content = contentArray.toString();
-
-      if (content !== '') {
-        const CORRECT_GIT_URL_REGEX = /git@github\.com:uwoece-se2205b-2017\/[\w-]+\.git/g;
-        const correctMatch = CORRECT_GIT_URL_REGEX.exec(content);
-        if (!!correctMatch) {
-          // got a valid git url:
-          // The location from the file should be a URI
-          const uri = correctMatch[0];
-
-          parsed.cloneDirectory = path.join(config.extractedDirectory, studentDir, `submission-${parsed.studentId}`);
-          parsed.gitUri = uri;
-        } else {
-          // Now look for common errors
-          const HTTPS_GIT_URL_REGEX = /https:\/\/github\.com\/uwoece-se2205b-2017\/[\w-]+\.git/g;
-
-          const httpsMatch = HTTPS_GIT_URL_REGEX.exec(content);
-          if (!!httpsMatch) {
-            throw new Error("Received https link, incorrect submission: " + httpsMatch[0]);
+            parsed.cloneDirectory = path.join(config.extractedDirectory, studentDir, `submission-${parsed.studentId}`);
+            parsed.gitUri = uri;
           } else {
-            const INVALID_GIT_URL_REGEX = /git@github.com:uwoece-se2205b-2017\/[\w-]+\.git/g;
-            const invalidUrlMatch = INVALID_GIT_URL_REGEX.exec(content);
-            if (!!invalidUrlMatch) {
-              throw new Error("Invalid git url found: " + invalidUrlMatch[0]);
+            // Now look for common errors
+            const HTTPS_GIT_URL_REGEX = /https:\/\/github\.com\/uwoece-se2205b-2017\/[\w-]+\.git/g;
+
+            const httpsMatch = HTTPS_GIT_URL_REGEX.exec(content);
+            if (!!httpsMatch) {
+              throw new Error("Received https link, incorrect submission: " + httpsMatch[0]);
+            } else {
+              const INVALID_GIT_URL_REGEX = /git@github.com:uwoece-se2205b-2017\/[\w-]+\.git/g;
+              const invalidUrlMatch = INVALID_GIT_URL_REGEX.exec(content);
+              if (!!invalidUrlMatch) {
+                throw new Error("Invalid git url found: " + invalidUrlMatch[0]);
+              }
             }
           }
         }
-      }
 
-      return parsed;
-    })
-    .catch((e: Error) => {
-      parsed.error = e;
-      return Promise.resolve(parsed);
-    })
+        return parsed;
+      })
+      .catch((e: Error) => {
+        parsed.error = e;
+        return Promise.resolve(parsed);
+      })
+    });
+
 }
 
 function cloneSubmissions(parsed: Parsed): Promise<Parsed> {
@@ -172,16 +163,8 @@ function getLastCommit(git: git.Git, cloneDirectory: string, sakaiDate: moment.M
 }
 
 function initializeSubmissions(): Promise<Parsed[]> {
-  return Promise.resolve(fs.readdir(config.extractedDirectory))
-    .map(studentDir => {
-      return Promise.resolve(fs.stat(path.join(config.extractedDirectory, studentDir)))
-        .then(stat => [stat, studentDir]);
-    })
-    .filter(arr => {
-      return arr[0].isDirectory();
-    })
-    .map(arr => arr[1])
-    .map(readSubmissionInfo)
+  return getStudentDirectories()
+    .map(parseSubmissionInfo)
     .map(cloneSubmissions)
     .map((parsed: Parsed) => {
       // Get the timestamp
@@ -217,12 +200,17 @@ function writeParsedInformation(rubricTemplate: any, parsed: Parsed): Promise<Pa
   const outDir = parsed.studentDirectory;
   const cloneDir = parsed.cloneDirectory;
 
-  let json: any = parsed;
+  let json: any = _.cloneDeep(parsed);
   delete json.git;
 
   if (parsed.submission) {
     const days = parsed.submission.late.days();
     json.submission.late = (days <= 0 ? "on-time" : days + " days");
+  }
+
+  if (parsed.error) {
+    // Only write the message
+    json.error = parsed.error.message;
   }
 
   return Promise.resolve(fs.writeFile(path.join(outDir, "meta.json"), JSON.stringify(json, null, '  ')))
@@ -236,7 +224,8 @@ function writeParsedInformation(rubricTemplate: any, parsed: Parsed): Promise<Pa
             templateParsed.submission.commit.date = templateParsed.submission.commit.date.format("MMMM Do YYYY, hh:mm:ss");
             templateParsed.submission.penalty = (templateParsed.submission.penalty * 100.0) + '%';
 
-            const rubricPath = path.join(_.template(config.rubric.submissionPath)(parsed));
+            _.merge(templateParsed, config)
+            const rubricPath = path.join(_.template(config.rubric.submissionPath)(templateParsed));
             return Promise.resolve(fs.writeFile(rubricPath, rubricTemplate(templateParsed)));
           })
           .catch((error: Error) => {
