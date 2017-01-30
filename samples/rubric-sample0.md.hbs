@@ -1,17 +1,17 @@
 # Marking Lab 2
 
-**TA:** {{ teachingAssistant }}
+**TA:** {{ marker }}
 
 {{#with submission }}
-    **Date Submitted:** {{ date }}
+**Date Submitted:** {{ commit.date }}
 
-    **Commit ID:** {{ hash }}
+**Commit ID:** {{ commit.hash }}
 
-    **Late:** {{ late }}
+**Late:** {{ late }}
 
-    **Penalty:** {{ penalty }}
+**Penalty:** {{ penalty }}
 {{else}}
-    **Date Submitted:** No submission
+**Date Submitted:** No submission
 {{/with}}
 
 ## Questions

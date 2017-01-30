@@ -1,3 +1,6 @@
+# Intentional ignore, this will be changed by others
+/config.js
+
 dist/
 
 .DS_Store
@@ -76,3 +79,4 @@ fabric.properties
 /typings/
 /.env
 /rubric.md.hbs
+/dest/
