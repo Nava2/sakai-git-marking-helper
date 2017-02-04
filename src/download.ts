@@ -13,6 +13,7 @@ import _ = require('lodash');
 import git = require("simple-git");
 import moment = require('moment-timezone');
 import Handlebars = require('handlebars');
+import prompt = require('prompt');
 
 import {Parsed, SubmissionInfo} from './parsed';
 
@@ -189,6 +190,9 @@ function initializeSubmissions(): Promise<Parsed[]> {
  * @returns {Promise<void>}
  */
 function writeParsedInformation(rubricTemplate: any, parsed: Parsed): Promise<Parsed> {
+
+  let overrideExists = false;
+
   const git: git.Git = parsed.git;
 
   const outDir = parsed.studentDirectory;
@@ -220,9 +224,29 @@ function writeParsedInformation(rubricTemplate: any, parsed: Parsed): Promise<Pa
             const templateParsed = _.cloneDeep(json);
             templateParsed.submission.penalty = (templateParsed.submission.penalty * 100.0) + '%';
 
-            _.merge(templateParsed, config)
+            _.merge(templateParsed, config);
             const rubricPath = path.join(_.template(config.rubric.submissionPath)(templateParsed));
-            return Promise.resolve(fs.writeFile(rubricPath, rubricTemplate(templateParsed)));
+            return Promise.resolve(fs.exists(rubricPath))
+              .then(exists => {
+                if (exists && !overrideExists) {
+                  prompt.start();
+                  return Promise.promisify<any, any>(prompt.get, { context: prompt })([{
+                      name: 'overwrite',
+                      description: 'Overwrite existing files? [y/n]',
+                      type: 'string'
+                    }])
+                    .then(answer => {
+                      overrideExists = (answer.overwrite.startsWith('y'));
+                      console.warn("Overwriting rubrics: " + overrideExists);
+                      if (!overrideExists) {
+                        throw new Error("Could not create RUBRIC file as one already exists and not overwriting.");
+                      }
+                    });
+                } else {
+                  return Promise.resolve();
+                }
+              })
+              .then(() => (Promise.resolve(fs.writeFile(rubricPath, rubricTemplate(templateParsed)))));
           })
           .catch((error: Error) => {
             parsed.error = error;
