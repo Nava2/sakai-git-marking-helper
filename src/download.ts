@@ -11,7 +11,7 @@ import * as fs from 'mz/fs';
 
 import _ = require('lodash');
 import git = require("simple-git");
-import moment = require('moment');
+import moment = require('moment-timezone');
 import Handlebars = require('handlebars');
 
 import {Parsed, SubmissionInfo} from './parsed';
@@ -200,6 +200,9 @@ function writeParsedInformation(rubricTemplate: any, parsed: Parsed): Promise<Pa
   if (parsed.submission) {
     const days = parsed.submission.late.days();
     json.submission.late = (days <= 0 ? "on-time" : days + " days");
+
+    json.submission.sakaiDate = parsed.submission.sakaiDate.format("MMMM Do YYYY, hh:mm:ss ZZ");
+    json.submission.commit.date = parsed.submission.commit.date.format("MMMM Do YYYY, hh:mm:ss ZZ");
   }
 
   if (parsed.error) {
@@ -215,7 +218,6 @@ function writeParsedInformation(rubricTemplate: any, parsed: Parsed): Promise<Pa
           .then(() => Promise.promisify<void, string[]>(git.checkout, { context: git })([config.markingBranch]))
           .then(() => {
             const templateParsed = _.cloneDeep(json);
-            templateParsed.submission.commit.date = templateParsed.submission.commit.date.format("MMMM Do YYYY, hh:mm:ss");
             templateParsed.submission.penalty = (templateParsed.submission.penalty * 100.0) + '%';
 
             _.merge(templateParsed, config)

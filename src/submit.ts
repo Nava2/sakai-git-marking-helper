@@ -17,17 +17,16 @@ import glob = require('glob-promise');
 import {Parsed} from './parsed';
 
 import cfg = require("./config");
-import {getStudentDirectories, getSubmissionForDirectory} from "./filesystem";
+import {readParsedStructure} from "./filesystem";
 const config = cfg.load();
 
 function submit() {
-  return getStudentDirectories()
-    .map(getSubmissionForDirectory)
-    .map((parsed: Parsed) => {
-      return Promise.resolve(fs.readFile(path.join(parsed.studentDirectory, "meta.json")))
-        .then(content => {
-          return _.extend(parsed, JSON.parse(content.toString()));
-        });
+  console.log("Submitting student repositories to Github.");
+
+  return readParsedStructure()
+    .then(all => {
+      console.log("It will take approximately " + (all.length * 250.0 / 1000.0 / 60.0) + " minutes");
+      return all;
     })
     .filter((p: Parsed) => (!p.error))
     // now we have all of the meta data back
@@ -37,7 +36,10 @@ function submit() {
 
       return Promise.resolve(parsed.git.add('.')
         .commit("Submitting marks")
-        .push("origin", config.markingBranch));
+        .push("origin", config.markingBranch))
+        .then(() => {
+          setTimeout(() => Promise.resolve(parsed), 200);
+        });
     })
     .each(parsed => {
       console.log(parsed);

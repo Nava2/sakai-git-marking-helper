@@ -1,5 +1,5 @@
 
-import moment = require("moment");
+import moment = require("moment-timezone");
 require('any-promise/register/bluebird');
 
 export interface RubricConfig {
@@ -89,7 +89,11 @@ export class Config {
       this.markingBranch = from.markingBranch;
     }
 
-    this.dueDate = moment(from.dueDate, [moment.ISO_8601, "DD-MMM-YYYY hh:mm"]);
+    if (typeof(from.dueDate) == 'string') {
+      this.dueDate = moment.tz(from.dueDate, "DD-MMM-YYYY hh:mm", "America/Toronto");
+    } else {
+      this.dueDate = moment.tz(from.dueDate, "America/Toronto");
+    }
 
     this.late = new LateConfig(from.late);
   }

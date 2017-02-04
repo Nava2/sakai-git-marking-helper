@@ -6,6 +6,7 @@ require('any-promise/register/bluebird');
 const path = require('path');
 import * as fs from 'mz/fs';
 import glob = require('glob-promise');
+import _ = require('lodash');
 
 import { Parsed } from "./parsed";
 const config = require("./config").load();
@@ -47,4 +48,18 @@ export function getStudentDirectories(): Promise<string[]> {
       return arr[0].isDirectory();
     })
     .map(arr => arr[1]);
+}
+
+/**
+ * Reads all of the student directories, reading the `meta.json` file in each, producing a Parsed instance for each.
+ */
+export function readParsedStructure(): Promise<Parsed[]> {
+  return getStudentDirectories()
+    .map(getSubmissionForDirectory)
+    .map((parsed: Parsed) => {
+      return Promise.resolve(fs.readFile(path.join(parsed.studentDirectory, "meta.json")))
+        .then(content => {
+          return _.extend(parsed, JSON.parse(content.toString()));
+        });
+    });
 }
