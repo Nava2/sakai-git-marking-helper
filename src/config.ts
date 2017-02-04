@@ -2,6 +2,8 @@
 import moment = require("moment-timezone");
 require('any-promise/register/bluebird');
 
+import path from 'path';
+
 export interface RubricConfig {
   templatePath: string;
   submissionPath: string;
@@ -30,6 +32,8 @@ export interface ConfigSpec {
    * The branch to place marking information into, this defaults to "marking"
    */
   markingBranch?: string;
+
+  gradesFileName: string;
 
   // Date when the assignment is due, usually copied from Sakai
   dueDate: moment.Moment | string;
@@ -73,7 +77,12 @@ export class Config {
    */
   markingBranch: string = 'marking';
 
-  // Date when the assignment is due, usually copied from Sakai
+  /**
+   * Grades file path
+   */
+  gradesFileName: string;
+
+    // Date when the assignment is due, usually copied from Sakai
   dueDate: moment.Moment;
 
   late: LateConfig;
@@ -84,6 +93,8 @@ export class Config {
     this.rubric = from.rubric;
 
     this.extractedDirectory = from.extractedDirectory;
+
+    this.gradesFileName = from.gradesFileName;
 
     if (from.markingBranch) {
       this.markingBranch = from.markingBranch;

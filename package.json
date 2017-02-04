@@ -7,7 +7,9 @@
     "dbg-download": "node ./node_modules/gulp-cli/bin/gulp && node %NODE_DEBUG_OPTION% ./dist/app.js --download",
     "download": "node ./node_modules/gulp-cli/bin/gulp && node ./dist/app.js --download",
     "dbg-submit": "node ./node_modules/gulp-cli/bin/gulp && node %NODE_DEBUG_OPTION% ./dist/app.js --submit",
-    "submit": "node ./node_modules/gulp-cli/bin/gulp && node ./dist/app.js --submit"
+    "submit": "node ./node_modules/gulp-cli/bin/gulp && node ./dist/app.js --submit",
+    "dbg-package": "node ./node_modules/gulp-cli/bin/gulp && node %NODE_DEBUG_OPTION% ./dist/app.js --package",
+    "package": "node ./node_modules/gulp-cli/bin/gulp && node ./dist/app.js --package"
   },
   "repository": {
     "type": "git",
@@ -30,6 +32,7 @@
     "glob": "^7.1.1",
     "glob-promise": "^3.1.0",
     "handlebars": "^4.0.6",
+    "jszip": "^3.1.3",
     "lodash": "^4.17.4",
     "minimist": "^1.2.0",
     "moment": "^2.17.1",
@@ -41,6 +44,7 @@
     "@types/bluebird": "^3.0.37",
     "@types/glob": "^5.0.30",
     "@types/handlebars": "^4.0.31",
+    "@types/jszip": "^0.0.32",
     "@types/lodash": "^4.14.50",
     "@types/minimist": "^1.2.0",
     "@types/moment-timezone": "^0.2.34",

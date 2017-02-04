@@ -25,7 +25,7 @@ function submit() {
 
   return readParsedStructure()
     .then(all => {
-      console.log("It will take approximately " + (all.length * 250.0 / 1000.0 / 60.0) + " minutes");
+      console.log("It will take approximately " + (all.length * 250.0 / 1000.0 / 60.0 + "").substr(0, 5) + " minutes");
       return all;
     })
     .filter((p: Parsed) => (!p.error))
@@ -38,11 +38,12 @@ function submit() {
         .commit("Submitting marks")
         .push("origin", config.markingBranch))
         .then(() => {
-          setTimeout(() => Promise.resolve(parsed), 200);
+          var deferred = Promise.defer();
+          setTimeout(function(){
+            deferred.resolve(parsed);
+          }, 200);
+          return deferred.promise;
         });
-    })
-    .each(parsed => {
-      console.log(parsed);
     });
 }
 

@@ -20,9 +20,12 @@ module.exports = {
     submissionPath: "<%= cloneDirectory %>/RUBRIC.md"
   },
 
+  // Name of the grades file, usually just using the CSV or XLSX
+  gradesFileName: 'grades.csv',
+
   // Location where the student projects were extracted to, there should be a folder per
   // student in here. If you're on windows, you will have to use two \\ characters to separate paths.
-  extractedDirectory: "/path/to/assignment/folder",
+  extractedDirectory: "/path/to/directory",
 
   // Date when the assignment is due, usually copied from Sakai
   dueDate: "27-Jan-2017 23:55",
@@ -35,5 +38,5 @@ module.exports = {
     penaltyPerDay: 0.20
   }
 
-// DO NOT MODIFY BELOW
+// DO NOT MODIFY BELOW vvv
 };
