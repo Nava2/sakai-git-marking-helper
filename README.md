@@ -57,10 +57,12 @@ as defined in [`./config.js`](./config.js), likely `RUBRIC.md`. Modify this with
 Once a mark is known, update the `grades.csv` or `grades.xlsx` file in your extracted folder. Be mindful to apply any 
 penalties computer. 
 
-### Uploading to OWL
+### Uploading to Sakai
 
 Running `yarn package` will create a zip file called: `for-sakai.zip` in the extraction directory. This file can be used
 with the "Upload All" option on Sakai. Save your `grades.csv` before running the script. 
+
+When uploading, select the "Grades" checkbox and the "Feedback Comments" box.
 
 ### Pushing Rubrics to Github
 
