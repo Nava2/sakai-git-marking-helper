@@ -34,7 +34,11 @@ function submit() {
 
       parsed.git = git(parsed.cloneDirectory);
 
+      const filesToRemove = config.markingFiles.map(mf => (_.template(mf.to)(parsed)))
+        .map(p => path.relative(parsed.cloneDirectory, p));
+
       return Promise.resolve(parsed.git.add('.')
+        .rmKeepLocal(filesToRemove)
         .commit("Submitting marks")
         .push("origin", config.markingBranch))
         .then(() => {

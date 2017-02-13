@@ -11,11 +11,16 @@ import _ = require('lodash');
 import { Parsed } from "./parsed";
 const config = require("./config").load();
 
+export function idRegex() {
+  return /.*\(([\w\d]+)\)/;
+}
+
 export function getSubmissionForDirectory(studentDir: string): Promise<Parsed> {
-  const ID_REGEX = /.*\(([\w\d]+)\)/;
+
+  const m = idRegex().exec(studentDir);
 
   const parsed: Parsed = {
-    studentId: ID_REGEX.exec(studentDir)[1],
+    studentId: m[1],
     studentDirectory: path.join(config.extractedDirectory, studentDir),
     warnings: []
   };
@@ -45,7 +50,7 @@ export function getStudentDirectories(): Promise<string[]> {
         .then(stat => [stat, studentDir]);
     })
     .filter(arr => {
-      return arr[0].isDirectory();
+      return arr[0].isDirectory() && !!idRegex().exec(arr[1]);
     })
     .map(arr => arr[1]);
 }
@@ -56,6 +61,7 @@ export function getStudentDirectories(): Promise<string[]> {
 export function readParsedStructure(): Promise<Parsed[]> {
   return getStudentDirectories()
     .map(getSubmissionForDirectory)
+    .filter(v => !!v)
     .map((parsed: Parsed) => {
       return Promise.resolve(fs.readFile(path.join(parsed.studentDirectory, "meta.json")))
         .then(content => {

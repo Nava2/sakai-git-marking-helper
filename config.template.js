@@ -20,12 +20,22 @@ module.exports = {
     submissionPath: "<%= cloneDirectory %>/RUBRIC.md"
   },
 
+  // Add files that are used in Marking, these files will not be committed when calling `submit`
+  // "from" is the local path where the file exists
+  // "to" is the path to place the file.
+  markingFiles: [
+    {
+      from: "./samples/MarkingTests.java",
+      to: "<%= cloneDirectory %>/src/test/path/to/package/MarkingTests.java"
+    }
+  ],
+
   // Name of the grades file, usually just using the CSV or XLSX
   gradesFileName: 'grades.csv',
 
   // Location where the student projects were extracted to, there should be a folder per
   // student in here. If you're on windows, you will have to use two \\ characters to separate paths.
-  extractedDirectory: "/path/to/directory",
+  extractedDirectory: "/path/to/extracted/submission",
 
   // Date when the assignment is due, usually copied from Sakai
   dueDate: "27-Jan-2017 23:55",

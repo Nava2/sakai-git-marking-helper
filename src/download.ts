@@ -14,6 +14,8 @@ import git = require("simple-git");
 import moment = require('moment-timezone');
 import Handlebars = require('handlebars');
 import prompt = require('prompt');
+import mkdirp_m = require('mkdirp');
+const mkdirp = Promise.promisify(mkdirp_m);
 
 import {Parsed, SubmissionInfo} from './parsed';
 
@@ -246,7 +248,19 @@ function writeParsedInformation(rubricTemplate: any, parsed: Parsed): Promise<Pa
                   return Promise.resolve();
                 }
               })
-              .then(() => (Promise.resolve(fs.writeFile(rubricPath, rubricTemplate(templateParsed)))));
+              .then(() => (Promise.resolve(fs.writeFile(rubricPath, rubricTemplate(templateParsed)))))
+              .then(() => {
+                return Promise.all(
+                  config.markingFiles.map(mf => {
+                    const fromPath = _.template(mf.from)(parsed);
+                    const toPath = _.template(mf.to)(parsed);
+                    return mkdirp(path.dirname(toPath))
+                          .then(() => Promise.resolve(fs.readFile(fromPath)))
+                          .then(content => Promise.resolve<void>(fs.writeFile(toPath, content)));
+                    })
+                  );
+              })
+              .then(() => {});
           })
           .catch((error: Error) => {
             parsed.error = error;

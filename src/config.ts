@@ -18,11 +18,25 @@ export interface LateConfigSpec {
   penaltyPerDay: number;
 }
 
+export interface MarkingFileSpec {
+  /**
+   * Location to copy from
+   */
+  from: string;
+
+  /**
+   * Location to copy to
+   */
+  to: string;
+}
+
 export interface ConfigSpec {
 
   marker: string;
 
   rubric: RubricConfig;
+
+  markingFiles?: MarkingFileSpec[];
 
   // Location where the student projects were extracted to, there should be a folder per
   // student in here
@@ -41,13 +55,26 @@ export interface ConfigSpec {
   late: LateConfigSpec;
 }
 
+export class MarkingFile {
+
+  readonly from: string;
+
+  readonly to: string;
+
+  constructor(spec: MarkingFileSpec) {
+    this.from = spec.from;
+    this.to = spec.to;
+  }
+
+}
+
 export class LateConfig {
 
   // How many days late are allowed
-  days: moment.Duration;
+  readonly days: moment.Duration;
 
   // Percentage taken off of a mark per day
-  penaltyPerDay: number;
+  readonly penaltyPerDay: number;
 
   constructor(from: LateConfigSpec) {
 
@@ -72,6 +99,8 @@ export class Config {
   // student in here
   extractedDirectory: string;
 
+  markingFiles: MarkingFile[];
+
   /**
    * The branch to place marking information into, this defaults to "marking"
    */
@@ -95,6 +124,8 @@ export class Config {
     this.extractedDirectory = from.extractedDirectory;
 
     this.gradesFileName = from.gradesFileName;
+
+    this.markingFiles = !!from.markingFiles ? from.markingFiles.map(v => new MarkingFile(v)) : [];
 
     if (from.markingBranch) {
       this.markingBranch = from.markingBranch;
