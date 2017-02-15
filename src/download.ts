@@ -138,7 +138,14 @@ function getLastCommit(git: git.Git, sakaiDate: moment.Moment): Promise<Submissi
       for (let log of logs.all) {
         const mdate = moment(log["date"], 'YYYY-MM-DD hh:mm:ss ZZ');
         if (mdate.isSameOrBefore(maxSubDate)) {
-          const lateDiff = moment.duration(moment.max(mdate, sakaiDate).diff(config.dueDate));
+          let lateDiff = config.dueDate.diff(moment.max(mdate, sakaiDate));
+
+          if (lateDiff > 0) {
+            lateDiff = moment.duration(lateDiff).add(1, 'day');
+          } else {
+            lateDiff = moment.duration(0);
+          }
+
           let submission: SubmissionInfo = {
             commit: {
               hash: log["hash"],
