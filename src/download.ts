@@ -17,6 +17,9 @@ import prompt = require('prompt');
 import mkdirp_m = require('mkdirp');
 const mkdirp = Promise.promisify(mkdirp_m);
 
+import rimraf_m = require('rimraf');
+const rimraf = Promise.promisify(rimraf_m);
+
 import {Parsed, SubmissionInfo} from './parsed';
 
 import {getSubmissionForDirectory, getStudentDirectories} from "./filesystem";
@@ -79,12 +82,24 @@ function cloneSubmissions(parsed: Parsed): Promise<Parsed> {
     return Promise.resolve(parsed);
   }
 
-  return Promise.resolve(fs.exists(parsed.cloneDirectory))
+  return Promise.resolve(fs.exists(path.join(parsed.cloneDirectory, '.git')))
     .then((exists: boolean) => {
       parsed.git = git();
       if (!exists) {
-        return Promise.resolve(parsed.git.clone(parsed.gitUri, parsed.cloneDirectory)
-          .cwd(parsed.cloneDirectory));
+        // there is no .git folder, that is there is a folder, but its not the git repository
+        return Promise.resolve(fs.exists(parsed.cloneDirectory)
+            .then((cloneDirExists: boolean) => {
+                if (cloneDirExists) {
+                    // Delete the clone directory
+                    return rimraf(parsed.cloneDirectory);
+                } else {
+                    return Promise.resolve();
+                }
+            }))
+            .then(() => {
+                return Promise.resolve(parsed.git.clone(parsed.gitUri, parsed.cloneDirectory)
+                    .cwd(parsed.cloneDirectory));
+            });
       } else {
         parsed.git = parsed.git.cwd(parsed.cloneDirectory);
         return Promise.resolve(parsed.git.pull('origin', 'master'));

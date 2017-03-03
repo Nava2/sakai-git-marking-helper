@@ -3,6 +3,8 @@
 module.exports = {
 // DO not change this line ^^^^
 
+  // This file is a template, copy this file and name it `config.js`. Do not modify this file directly.
+
   // Modify the following per project:
 
   // Name of the marker, this is written into the Rubric usually
@@ -25,8 +27,8 @@ module.exports = {
   // "to" is the path to place the file.
   markingFiles: [
     {
-      from: "./samples/MarkingTests.java",
-      to: "<%= cloneDirectory %>/src/test/path/to/package/MarkingTests.java"
+      from: "D:\\se2205\\MarkingTests.java",
+      to: "<%= cloneDirectory %>/src/test/java/path/to/package/MarkingTests.java"
     }
   ],
 
@@ -35,7 +37,7 @@ module.exports = {
 
   // Location where the student projects were extracted to, there should be a folder per
   // student in here. If you're on windows, you will have to use two \\ characters to separate paths.
-  extractedDirectory: "/path/to/extracted/submission",
+  extractedDirectory: "/path/to/extracted/files",
 
   // Date when the assignment is due, usually copied from Sakai
   dueDate: "27-Jan-2017 23:55",
