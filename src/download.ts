@@ -148,18 +148,12 @@ function getLastCommit(git: git.Git, sakaiDate: moment.Moment): Promise<Submissi
     .then((logs: git.ListLogSummary) => {
       // logs are in reverse chronological order already! :D
 
-      const maxSubDate = config.dueDate.add(config.late.days);
+      const maxSubDate = config.dueDate.clone().add(config.late.days);
 
       for (let log of logs.all) {
         const mdate = moment(log["date"], 'YYYY-MM-DD hh:mm:ss ZZ');
         if (mdate.isSameOrBefore(maxSubDate)) {
-          let lateDiff = config.dueDate.diff(moment.max(mdate, sakaiDate));
-
-          if (lateDiff > 0) {
-            lateDiff = moment.duration(lateDiff).add(1, 'day');
-          } else {
-            lateDiff = moment.duration(0);
-          }
+          let lateDiff = moment.duration(mdate.diff(config.dueDate));
 
           let submission: SubmissionInfo = {
             commit: {
@@ -168,7 +162,7 @@ function getLastCommit(git: git.Git, sakaiDate: moment.Moment): Promise<Submissi
             },
 
             sakaiDate: sakaiDate,
-            late: lateDiff,
+            late: lateDiff.add(1, 'days'),
             penalty: Math.max(0, lateDiff.days()) * config.late.penaltyPerDay
           };
 
