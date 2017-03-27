@@ -27,7 +27,7 @@ module.exports = {
   // "to" is the path to place the file.
   markingFiles: [
     {
-      from: "D:\\se2205\\MarkingTests.java",
+      from: "/path/to/package/MarkingTests.java",
       to: "<%= cloneDirectory %>/src/test/java/path/to/package/MarkingTests.java"
     }
   ],
