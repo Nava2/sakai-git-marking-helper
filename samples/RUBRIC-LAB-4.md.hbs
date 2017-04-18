@@ -1,0 +1,73 @@
+# Marking Lab 4
+
+**Student:** {{ studentId }}
+
+**TA:** {{ marker }}
+
+{{#with submission }}
+**Date Submitted:** {{ commit.date }}
+
+**Commit ID:** {{ commit.hash }}
+
+**Late:** {{ late }}
+
+**Penalty:** {{ penalty }}
+{{else}}
+**Date Submitted:** No submission
+{{/with}}
+
+## Questions
+
+### Question 1 - AVL Tree
+
+#### Interface/Implementation - `AVLTree`
+
+| Description | Awarded | Max Awarded |
+|:------------|:-------:|:-----:|
+| Use of `Comparator<>`  | 2 | 2 |
+| Constructors           | 2 | 2 |
+| Contains               | 1 | 1 |
+| Height                 | 1 | 1 |
+| Equals                 | 1 | 1 |
+| HashCode               | 2 | 2 |
+| isBalanced             | 1 | 1 |
+| isProper               | 1 | 1 |
+| iterator_preOrder      | 1 | 1 |
+| iterator_inOrder       | 1 | 1 |
+| iterator_postOrder     | 1 | 1 |
+| put()                  | 2 | 2 |
+| remove()               | 4 | 4 |
+| size() and isEmpty()   | 1 | 1 |
+| Some tests written     | 2 | 2 |
+| **Total**              |28 |28 |
+
+#### Questions
+
+| Description | Awarded | Max Awarded |
+|:------------|:-------:|:-----:|
+| Q1 - Benefit of AVL    | 1 | 1 |
+| Q2 - Red-Black vs. AVL | 2 | 2 |
+| **Total**              | 3 | 3 |
+
+### Question 2 - Tree Map
+
+#### Interface/Implementation - `AVLTreeMap<>`
+
+| Description | Awarded | Max Awarded |
+|:------------|:-------:|:-----:|
+| contains()                | 1 | 1 |
+| entrySet()                | 6 | 6 |
+| equals                    | 2 | 2 |
+| get                       | 1 | 1 |
+| put()                     | 1 | 1 |
+| size() and isEmpty()      | 1 | 1 |
+| **Total**                 | 12| 12|
+
+## Total Mark
+
+| Question | Mark |
+|:----------|:---:|
+| Q1        | 28  |
+| Q2        | 12  |
+| **Total** | 40 / 40 |
+| Late Penalty | {{#with submission}}{{penalty}}{{else}} 0% {{/with}} |

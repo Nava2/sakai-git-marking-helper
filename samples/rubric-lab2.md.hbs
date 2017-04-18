@@ -1,0 +1,100 @@
+# Marking Lab 2
+
+**Student:** {{ studentId }}
+
+**TA:** {{ marker }}
+
+{{#with submission }}
+**Date Submitted:** {{ commit.date }}
+
+**Commit ID:** {{ commit.hash }}
+
+**Late:** {{ late }}
+
+**Penalty:** {{ penalty }}
+{{else}}
+**Date Submitted:** No submission
+{{/with}}
+
+## Questions
+
+### Question 1 - Student
+
+#### Interface/Implementation - `Student`
+
+| Description | Awarded | Max Awarded |
+|:------------|:-------:|:-----:|
+| Proper interface (must be `public`)       | 1 | 1 |
+| `firstName: String`, `lastName: String`   | 1 | 1 |
+| `id: long` - no "setter"                  | 1 | 1 |
+| `courses: List<Course>`                   | 2 | 2 |
+| `department: Department`                  | 2 | 2 |
+| **Total**                                 | 7 | 7 |
+
+
+### Question 2 - Exception
+
+| Description | Awarded | Max Awarded |
+|:------------|:-------:|:-----:|
+| `public` **`RuntimeException`**         | 1 | 1 |
+| Fields for `Student` and `Course`       | 1 | 1 |
+| Correct message                         | 1 | 1 |
+| **Total**                               | 3 | 3 |
+
+### Question 3 - Course
+
+| Description | Awarded | Max Awarded |
+|:------------|:-------:|:-----:|
+| Class is "package private"                            | 1 | 1 |
+| `name: String`, `code: String`                        | 1 | 1 |
+| Throws exception if enrolling over max students       | 1 | 1 |
+| `students: List<Student>`                             | 2 | 2 |
+| `department: Department`                              | 2 | 2 |
+| **Total**                                             | 7 | 7 |
+
+### Question 4 - Department
+
+| Description | Awarded | Max Awarded |
+|:------------|:-------:|:-----:|
+| Class is "package private"                            | 1 | 1 |
+| `name: String`                                        | 1 | 1 |
+| `students: List<Student>` - handles transitive calls  | 2 | 2 |
+| `courses: List<Course>` - handles transitive calls    | 2 | 2 |
+| **Total**                                             | 6 | 6 |
+
+### Question 5 - Overall
+
+| Description | Awarded | Max Awarded |
+|:------------|:-------:|:-----:|
+| `ProvidedModelFactory` to populate a model            | 3 | 3 |
+| Best effort testing was written                       | 3 | 3 |
+| Documentation                                         | 3 | 3 |
+| **Total**                                             | 9 | 9 |
+
+#### Questions
+
+| Description | Awarded | Max Awarded |
+|:------------|:-------:|:-----:|
+| Q1          | 2 | 2 |
+| Q2          | 2 | 2 |
+| Q3          | 2 | 2 |
+| **Total**   | 6 | 6 |
+
+
+#### Mark
+
+| Mark | Total
+|:----:|:-----:|
+| 15   | 15 |
+
+## Total Mark
+
+| Question | Mark |
+|:----------|:---:|
+| Q1        | 7   |
+| Q2        | 3   |
+| Q3        | 7   |
+| Q4        | 6   |
+| Q5        | 15  |
+| **Total** | 38 / 38 |
+| Late Penalty | {{#with submission}}{{penalty}}{{else}} 0% {{/with}} |

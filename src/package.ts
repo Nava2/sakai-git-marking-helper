@@ -24,7 +24,7 @@ import {readParsedStructure} from "./filesystem";
 import JSZip = require("jszip");
 
 const FEEDBACK_MARKED = _.template("<p>Feedback is available at " +
-  "<a href=\"<%= repoUrl %>/blob/<%= branch %>/<%= rubricFile %>\"><%= rubricFile %></a></p>\n" +
+  "<a href=\"<%= repoUrl %>/blob/<%= branch %>/\">Github</a></p>\n" +
   "<p>Marked by: <%= marker %></p>");
 
 const FEEDBACK_NO_SUB = _.template("<p>No submission provided.</p>\n" +
@@ -51,7 +51,6 @@ function pkg() {
 
       const templateBase = {
         branch: config.markingBranch,
-        rubricFile: path.basename(config.rubric.submissionPath),
         marker: config.marker
       };
       if (!!parsed.submission) {

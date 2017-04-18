@@ -10,12 +10,13 @@ const path = require('path');
 import * as fs from 'mz/fs';
 
 import _ = require('lodash');
+import { exec } from 'process-promises';
 import git = require("simple-git");
 import moment = require('moment-timezone');
 import Handlebars = require('handlebars');
 import prompt = require('prompt');
 import mkdirp_m = require('mkdirp');
-const mkdirp = Promise.promisify(mkdirp_m);
+const mkdirp = Promise.promisify<string, string>(mkdirp_m);
 
 import rimraf_m = require('rimraf');
 const rimraf = Promise.promisify(rimraf_m);
@@ -23,11 +24,12 @@ const rimraf = Promise.promisify(rimraf_m);
 import {Parsed, SubmissionInfo} from './parsed';
 
 import {getSubmissionForDirectory, getStudentDirectories} from "./filesystem";
+import {MarkingFile, Command} from "./config";
 
 const config = require("./config").load();
 
-function getRubricTemplate() {
-  return Promise.resolve(fs.readFile(config.rubric.templatePath))
+function getHandlebarsTemplate(path) {
+  return Promise.resolve(fs.readFile(path))
     .then(v => v.toString())
     .then(Handlebars.compile);
 }
@@ -201,20 +203,49 @@ function initializeSubmissions(): Promise<Parsed[]> {
     });
 }
 
+
+let promptForOverride = (function () {
+
+  let OVERWRITE_REQUESTED = false;
+
+  return function promptForOverride(path: string) {
+    if (OVERWRITE_REQUESTED || config.overwrite) {
+      return Promise.resolve();
+    }
+
+    return Promise.resolve(fs.exists(path))
+      .then(exists => {
+        if (exists && !OVERWRITE_REQUESTED && !config.overwrite) {
+          OVERWRITE_REQUESTED = true;
+          prompt.start();
+          return Promise.promisify<any, any>(prompt.get, {context: prompt})([{
+            name: 'overwrite',
+            description: 'Overwrite existing files? [y/n]',
+            type: 'string'
+          }])
+            .then(answer => {
+              config.overwrite = (answer.overwrite.startsWith('y'));
+              if (!config.overwrite) {
+                throw new Error("Could not create file as already exists and not overwriting.");
+              }
+            });
+        } else {
+          return Promise.resolve();
+        }
+      });
+  };
+})();
+
 /**
  * Using all of the parsed information, now write it back for marking use
- * @param rubricTemplate The Handlebars template data is written into for a rubric
  * @param parsed
  * @returns {Promise<void>}
  */
-function writeParsedInformation(rubricTemplate: any, parsed: Parsed): Promise<Parsed> {
-
-  let overrideExists = false;
+function writeParsedInformation(parsed: Parsed): Promise<Parsed> {
 
   const git: git.Git = parsed.git;
 
   const outDir = parsed.studentDirectory;
-  const cloneDir = parsed.cloneDirectory;
 
   let json: any = _.cloneDeep(parsed);
   delete json.git;
@@ -232,69 +263,101 @@ function writeParsedInformation(rubricTemplate: any, parsed: Parsed): Promise<Pa
     json.error = parsed.error.message;
   }
 
-  return Promise.resolve(fs.writeFile(path.join(outDir, "meta.json"), JSON.stringify(json, null, '  ')))
+  const metaPath = path.join(outDir, "meta.json");
+
+  return Promise.resolve(fs.writeFile(metaPath, JSON.stringify(json, null, '  ')))
     .then(() => {
       if (!parsed.error && !!git) {
 
         return Promise.promisify<void, string[]>(git.branch, { context: git })([config.markingBranch, '--force'])
-          .then(() => Promise.promisify<void, string[]>(git.checkout, { context: git })([config.markingBranch]))
+          .then(() => (Promise.promisify<void, string[]>(git.checkout, { context: git })([config.markingBranch])))
           .then(() => {
             const templateParsed = _.cloneDeep(json);
             templateParsed.submission.penalty = (templateParsed.submission.penalty * 100.0) + '%';
 
+            const prevDir = process.cwd();
+
             _.merge(templateParsed, config);
-            const rubricPath = path.join(_.template(config.rubric.submissionPath)(templateParsed));
-            return Promise.resolve(fs.exists(rubricPath))
-              .then(exists => {
-                if (exists && !overrideExists) {
-                  prompt.start();
-                  return Promise.promisify<any, any>(prompt.get, { context: prompt })([{
-                      name: 'overwrite',
-                      description: 'Overwrite existing files? [y/n]',
-                      type: 'string'
-                    }])
-                    .then(answer => {
-                      overrideExists = (answer.overwrite.startsWith('y'));
-                      console.warn("Overwriting rubrics: " + overrideExists);
-                      if (!overrideExists) {
-                        throw new Error("Could not create RUBRIC file as one already exists and not overwriting.");
-                      }
-                    });
-                } else {
-                  return Promise.resolve();
-                }
-              })
-              .then(() => (Promise.resolve(fs.writeFile(rubricPath, rubricTemplate(templateParsed)))))
-              .then(() => {
-                return Promise.all(
-                  config.markingFiles.map(mf => {
-                    const fromPath = _.template(mf.from)(parsed);
-                    const toPath = _.template(mf.to)(parsed);
-                    return mkdirp(path.dirname(toPath))
-                          .then(() => Promise.resolve(fs.readFile(fromPath)))
-                          .then(content => Promise.resolve<void>(fs.writeFile(toPath, content)));
-                    })
-                  );
-              })
-              .then(() => {});
+            return Promise.all(config.markingFiles.map(mf => {
+                const fromPath = _.template(mf.from)(templateParsed);
+                const toPath = path.resolve(parsed.cloneDirectory, _.template(mf.to)(templateParsed));
+                const toInfo = path.parse(toPath);
+                const fromInfo = path.parse(fromPath);
+                return mkdirp(toInfo.dir)
+                  .then(() => (promptForOverride(toPath)))
+                  .then(() => {
+                    let out: Promise<string|Buffer>;
+
+                    if (fromInfo.ext == '.hbs') {
+                      out = getHandlebarsTemplate(fromPath)
+                        .then(hb => Promise.resolve(hb(templateParsed)));
+                    } else {
+                      out = Promise.resolve(fs.readFile(fromPath));
+                    }
+
+                    return out.then(content => (Promise.resolve<void>(fs.writeFile(toPath, content))));
+                  });
+              }))
+              .then(() => (Promise.resolve(parsed)));
           })
           .catch((error: Error) => {
             parsed.error = error;
             return Promise.resolve(parsed);
           });
       } else {
-        return Promise.resolve();
+        return Promise.resolve(parsed);
       }
     })
     .then(() => (Promise.resolve(parsed)));
 }
 
+function handleCommands(parsed: Parsed) {
+  const logDir = path.join(parsed.studentDirectory, 'logs');
+
+  if (!parsed.error && config.commands) {
+    return Promise.resolve<boolean>(fs.exists(logDir))
+      .then(exists => {
+        if (!exists) {
+          return Promise.resolve<void>(mkdirp(logDir));
+        } else {
+          return Promise.resolve();
+        }
+      })
+      .then(() => {
+        // Run all of the commands in series, make sure they don't run out of order
+        return Promise.mapSeries(config.commands, (cmd: Command, index) => {
+          let opts = {
+            cwd: _.template(cmd.cwd)(parsed)
+          };
+          if (!opts.cwd || opts.cwd == "") {
+            opts.cwd = parsed.cloneDirectory;
+          }
+
+          return exec(_.template(cmd.command)(parsed), opts)
+            .then(result => {
+              return Promise.all([
+                fs.writeFile(path.join(logDir, "command." + index + ".stdout"), result.stdout),
+                fs.writeFile(path.join(logDir, "command." + index + ".stderr"), result.stderr)
+              ]);
+            });
+        })
+          .then(() => (Promise.resolve(parsed)))
+          .catch(error => {
+            parsed.error = error;
+            return Promise.resolve(parsed);
+          });
+      }).then((parsed: Parsed) => {
+        console.log(parsed.studentId + ":\tCompleted " + config.commands.length + " commands");
+        return Promise.resolve(parsed);
+      });
+  } else {
+    return Promise.resolve(parsed);
+  }
+}
+
 function download() {
-  return getRubricTemplate()
-    .then(rubric => {
-      return initializeSubmissions()
-        .map((parsed: Parsed) => (writeParsedInformation(rubric, parsed)));
-    })
+  return initializeSubmissions()
+    .map((parsed: Parsed) => (writeParsedInformation(parsed)))
     .each((parsed: Parsed) => {
 
       if (parsed.warnings.length > 0) {
@@ -304,10 +367,12 @@ function download() {
       }
 
       if (parsed.error) {
-        console.error(`${parsed.studentId}: ${parsed.error.message}`);
+        console.error(`${parsed.studentId}:\t${parsed.error.message}`);
       } else {
-        console.log(`${parsed.studentId}: Completed download`);
+        console.log(`${parsed.studentId}:\tCompleted download`);
       }
+
+      return handleCommands(parsed);
     });
 }
 

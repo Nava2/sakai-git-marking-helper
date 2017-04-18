@@ -1,6 +1,8 @@
 # Intentional ignore, this will be changed by others
 /config.js
 
+src/*.js
+*.map
 *.java
 
 dist/

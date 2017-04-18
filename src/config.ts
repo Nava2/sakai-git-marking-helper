@@ -4,11 +4,6 @@ require('any-promise/register/bluebird');
 
 import path from 'path';
 
-export interface RubricConfig {
-  templatePath: string;
-  submissionPath: string;
-}
-
 export interface LateConfigSpec {
 
   // How many days late are allowed
@@ -17,6 +12,15 @@ export interface LateConfigSpec {
   // Percentage taken off of a mark per day
   penaltyPerDay: number;
 }
+
+export interface Command {
+
+  command: string;
+
+  cwd?: string;
+}
+
+export type CommandSpec = Command | string;
 
 export interface MarkingFileSpec {
   /**
@@ -28,13 +32,18 @@ export interface MarkingFileSpec {
    * Location to copy to
    */
   to: string;
+
+  /**
+   * True if the config file should be kept
+   */
+  keep: boolean;
 }
 
 export interface ConfigSpec {
 
   marker: string;
 
-  rubric: RubricConfig;
+  overwrite: boolean;
 
   markingFiles?: MarkingFileSpec[];
 
@@ -46,6 +55,11 @@ export interface ConfigSpec {
    * The branch to place marking information into, this defaults to "marking"
    */
   markingBranch?: string;
+
+  /**
+   * Commands to run per project
+   */
+  commands?: CommandSpec[];
 
   gradesFileName: string;
 
@@ -61,9 +75,12 @@ export class MarkingFile {
 
   readonly to: string;
 
+  readonly keep: boolean;
+
   constructor(spec: MarkingFileSpec) {
     this.from = spec.from;
     this.to = spec.to;
+    this.keep = spec.keep;
   }
 
 }
@@ -93,7 +110,7 @@ export class Config {
 
   marker: string;
 
-  rubric: RubricConfig;
+  overwrite: boolean = false;
 
   // Location where the student projects were extracted to, there should be a folder per
   // student in here
@@ -111,6 +128,8 @@ export class Config {
    */
   gradesFileName: string;
 
+  commands: Command[];
+
     // Date when the assignment is due, usually copied from Sakai
   dueDate: moment.Moment;
 
@@ -118,12 +137,23 @@ export class Config {
 
   constructor(from: ConfigSpec) {
     this.marker = from.marker;
-
-    this.rubric = from.rubric;
+    this.overwrite = from.overwrite;
 
     this.extractedDirectory = from.extractedDirectory;
 
     this.gradesFileName = from.gradesFileName;
+
+    this.commands = [];
+
+    if (from.commands) {
+      this.commands = from.commands.map(cmd => {
+        if (typeof cmd == 'string') {
+          return { command: cmd };
+        } else {
+          return cmd;
+        }
+      });
+    }
 
     this.markingFiles = !!from.markingFiles ? from.markingFiles.map(v => new MarkingFile(v)) : [];
 
